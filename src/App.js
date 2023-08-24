@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 function App() {
   const [countriesList, setCountriesList] = useState([]);
   const [countries, setCountries] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isAllFetchings, setIsAllFetching] = useState(false);
 
   const getCountriesData = async () => {
     const response = await fetch(
@@ -15,16 +15,11 @@ function App() {
   };
 
   const getCountryDetails = async (name, i) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`https://restcountries.com/v2/name/${name}`);
-      const details = await response.json();
-      const newState = structuredClone(countries);
-      newState[i] = { ...newState[i], value: JSON.stringify(details) };
-      setCountries(newState);
-    } finally {
-      setLoading(false);
-    }
+    const response = await fetch(`https://restcountries.com/v2/name/${name}`);
+    const details = await response.json();
+    const newState = structuredClone(countries);
+    newState[i] = { ...newState[i], value: JSON.stringify(details) };
+    setCountries(newState);
   };
   const fetchBatchCountries = async (batchCountries, requestIndex) => {
     for (let i = 0; i < batchCountries.length; i += 1) {
@@ -38,12 +33,28 @@ function App() {
           ...newState[requestIndex + i],
           value: JSON.stringify(details),
         };
+        if (requestIndex + i + 1 < countries.length)
+          newState[requestIndex + i + 1] = {
+            ...newState[requestIndex + i + 1],
+            value: "loading...",
+          };
+        if (requestIndex + i + 2 < countries.length)
+          newState[requestIndex + i + 2] = {
+            ...newState[requestIndex + i + 2],
+            value: "loading...",
+          };
+        if (requestIndex + i + 3 < countries.length)
+          newState[requestIndex + i + 3] = {
+            ...newState[requestIndex + i + 3],
+            value: "loading...",
+          };
         return newState;
       });
     }
   };
 
   const fetchAllCountries = async () => {
+    setIsAllFetching(true);
     for (let i = 0; i < Math.ceil(countries.length / 3); i++) {
       const batchCountries = countries.slice(i * 3, i * 3 + 3);
       await fetchBatchCountries(batchCountries, i * 3);
@@ -72,7 +83,7 @@ function App() {
               <td className="name" onClick={() => getCountryDetails(name, i)}>
                 {name}
               </td>
-              <td>{loading ? "loading" : value || ""}</td>
+              <td>{value || (isAllFetchings && "In queue")}</td>
             </tr>
           ))}
         </tbody>
